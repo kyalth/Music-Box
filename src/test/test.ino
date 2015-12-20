@@ -7,7 +7,7 @@
 
 //#include <SPI.h>
 
-#include <SD.h>
+#include <SD.h>  //Library to use SD card breakout
 
 // set up variables using the SD utility library functions:
 Sd2Card card;
@@ -16,7 +16,20 @@ SdFile root;
 
 Adafruit_MCP4725 DAC;
 
-const int chipSelect = 10;    
+//SD card pin definitons
+#define CS  10    //chip select
+#define DI  11    //MOSI
+#define DO  12    //MISO
+#define CLK  13   //SPI clock
+
+//I2C DAC pin definitions
+#define SDA  A4   //I2C Data line
+#define SCL  A5   //I2C Clock line
+
+//WAV reading definitions
+#define BUFFERSIZE  256  //size of buffers used to read wav file in chucks
+
+
 
 void setup()
 {
@@ -40,7 +53,7 @@ void setup()
 
   // we'll use the initialization code from the utility libraries
   // since we're just testing if the card is working!
-  if (!card.init(SPI_HALF_SPEED, chipSelect)) {
+  if (!card.init(SPI_HALF_SPEED, CS)) {
     Serial.println("initialization failed. Things to check:");
     Serial.println("* is a card is inserted?");
     Serial.println("* Is your wiring correct?");
