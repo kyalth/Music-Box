@@ -1,8 +1,9 @@
 //Test space
 
-#include <Adafruit_MCP4725.h>
+//Includes
+#include <Adafruit_MCP4725.h> //DAC library
 
-#include <Wire.h>
+#include <Wire.h>  //I2C library
 
 //#include <SPI.h>
 
