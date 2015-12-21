@@ -112,7 +112,7 @@ void setup()
   root.ls(LS_R | LS_DATE | LS_SIZE);
 }
 
-ISR (TIMER_COMPA_vect)
+ISR (TIMER1_COMPA_vect)
 {
 	cli();
 	Serial.println("TIME!");
@@ -120,6 +120,12 @@ ISR (TIMER_COMPA_vect)
 }
 	
 void loop(void) {
+  TCCR1A =0;
+  TCCR1B =0x0A;
+  TIMSK1 =0x02;
+  OCR1AH =0x00;
+  OCR1AL =0x5A;
+
   DAC.setVoltage((uint16_t)10,false);
   //Serial.println("Sound");
   delayMicroseconds(2272);
