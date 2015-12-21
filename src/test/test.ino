@@ -112,7 +112,13 @@ void setup()
   root.ls(LS_R | LS_DATE | LS_SIZE);
 }
 
-
+ISR (TIMER_COMPA_vect)
+{
+	cli();
+	Serial.println("TIME!");
+	sei();
+}
+	
 void loop(void) {
   DAC.setVoltage((uint16_t)10,false);
   //Serial.println("Sound");
