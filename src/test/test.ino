@@ -29,7 +29,25 @@ Adafruit_MCP4725 DAC;
 //WAV reading definitions
 #define BUFFERSIZE  256  //size of buffers used to read wav file in chucks
 
+//This struct will hold information related to the WAV file that's being read.
+typedef struct 
+{
+  int format;
+  int sample_rate;
+  int bits_per_sample;
+}wave_format;
+wave_format wave_info;
 
+volatile unsigned char note=0;		//Holds the current voltage value to be sent to the AD5330.
+
+unsigned char header[44];			//Holds the WAV file header
+unsigned char buffer1[BUFFERSIZE], buffer2[BUFFERSIZE];	//Two cycling buffers which contain the WAV data.
+char file_name[30];					//WAV file name.
+
+char play_buffer=0;					//Keeps track of which buffer is currently being used
+char new_buffer_ready=0;			//Flag used by 'Loop' code to tell the Interrupt that new data is ready in the buffer.
+volatile unsigned int byte_count=0;	//Keeps track of the number of bytes read from the current buffer.
+volatile char need_new_data=0;		//Flag used by Interrupt to tell 'Loop' code that a buffer is empty and needs to be refilled.
 
 void setup()
 {
@@ -38,71 +56,27 @@ void setup()
    while (!Serial) {
     ; // wait for serial port to connect. Needed for Leonardo only
   }
-  Serial.print("\nInitializing DAC...");
+  Serial.print("DAC...");
   DAC.begin(0x62);
   DAC.setVoltage((uint16_t)0,false);
-  Serial.print("\nInitialized DAC...");
+  Serial.println("+");
 
-  Serial.print("\nInitializing SD card...");
-  // On the Ethernet Shield, CS is pin 4. It's set as an output by default.
-  // Note that even if it's not used as the CS pin, the hardware SS pin 
-  // (10 on most Arduino boards, 53 on the Mega) must be left as an output 
-  // or the SD library functions will not work. 
+  Serial.print("SD ...");
   pinMode(10, OUTPUT);     // change this to 53 on a mega
 
-
-  // we'll use the initialization code from the utility libraries
-  // since we're just testing if the card is working!
   if (!card.init(SPI_HALF_SPEED, CS)) {
-    Serial.println("initialization failed. Things to check:");
-    Serial.println("* is a card is inserted?");
-    Serial.println("* Is your wiring correct?");
-    Serial.println("* did you change the chipSelect pin to match your shield or module?");
+    Serial.println("*");
     return;
   } else {
-   Serial.println("Wiring is correct and a card is present."); 
+   Serial.println("+"); 
   }
 
-  // print the type of card
-  Serial.print("\nCard type: ");
-  switch(card.type()) {
-    case SD_CARD_TYPE_SD1:
-      Serial.println("SD1");
-      break;
-    case SD_CARD_TYPE_SD2:
-      Serial.println("SD2");
-      break;
-    case SD_CARD_TYPE_SDHC:
-      Serial.println("SDHC");
-      break;
-    default:
-      Serial.println("Unknown");
-  }
 
-  // Now we will try to open the 'volume'/'partition' - it should be FAT16 or FAT32
   if (!volume.init(card)) {
-    Serial.println("Could not find FAT16/FAT32 partition.\nMake sure you've formatted the card");
+    Serial.println("Partition...*");
     return;
   }
 
-
-  // print the type and size of the first FAT-type volume
-  uint32_t volumesize;
-  Serial.print("\nVolume type is FAT");
-  Serial.println(volume.fatType(), DEC);
-  Serial.println();
-  
-  volumesize = volume.blocksPerCluster();    // clusters are collections of blocks
-  volumesize *= volume.clusterCount();       // we'll have a lot of clusters
-  volumesize *= 512;                            // SD card blocks are always 512 bytes
-  Serial.print("Volume size (bytes): ");
-  Serial.println(volumesize);
-  Serial.print("Volume size (Kbytes): ");
-  volumesize /= 1024;
-  Serial.println(volumesize);
-  Serial.print("Volume size (Mbytes): ");
-  volumesize /= 1024;
-  Serial.println(volumesize);
 
   
   Serial.println("\nFiles found on the card (name, date and size in bytes): ");
@@ -111,21 +85,49 @@ void setup()
   // list all files in the card with date and size
   root.ls(LS_R | LS_DATE | LS_SIZE);
 }
-
+/*
 ISR (TIMER1_COMPA_vect)
 {
 	cli();
-	Serial.println("TIME!");
+  //Check to see if we've read all of the data in the current buffer
+  if(byte_count==BUFFERSIZE)
+  {
+    need_new_data=1;	//Set a flag to tell the 'loop' code to refill the current buffer.
+    byte_count=0;		//Reset the count
+	//Check to see if new data exists in the alternate buffer
+	if(new_buffer_ready==1)
+    {
+	  //If new data is available, reassign the play buffer.
+      if(play_buffer==0)play_buffer=1;
+      else play_buffer=0;
+    }
+    else
+    {
+	  //If no new data is available then wait for it!
 	sei();
+	return;
 }
-	
-void loop(void) {
-  TCCR1A =0;
+}	
+
+  //Find out which buffer is being used, and get data from it.
+  if(play_buffer==0)note=buffer1[byte_count];
+  else note=buffer2[byte_count];
+  
+  //Increase the byte_count since we've taken the current data.
+  byte_count +=1;
+ 
+  DAC.setVoltage((uint16_t)note,false);
+sei();
+}
+*/
+void loop()
+{
+ /* TCCR1A =0;
   TCCR1B =0x0A;
   TIMSK1 =0x02;
   OCR1AH =0x00;
   OCR1AL =0x5A;
-
+*/
   DAC.setVoltage((uint16_t)10,false);
   //Serial.println("Sound");
   delayMicroseconds(2272);
