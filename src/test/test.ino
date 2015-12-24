@@ -8,12 +8,12 @@
 //#include <SPI.h>
 
 #include <SD.h>  //Library to use SD card breakout
-
+/*
 // set up variables using the SD utility library functions:
 Sd2Card card;
 SdVolume volume;
 SdFile root;
-
+*/
 Adafruit_MCP4725 DAC;
 
 //SD card pin definitons
@@ -63,27 +63,37 @@ void setup()
 
   Serial.print("SD ...");
   pinMode(10, OUTPUT);     // change this to 53 on a mega
-
+/*
   if (!card.init(SPI_HALF_SPEED, CS)) {
     Serial.println("*");
     return;
   } else {
    Serial.println("+"); 
   }
-
-
+*/
+if (!SD.begin(CS))
+{
+	Serial.println("*");
+	return;
+}
+else
+{
+	Serial.println("+");
+}
+/*
   if (!volume.init(card)) {
     Serial.println("Partition...*");
     return;
   }
+*/
 
-
-  
+/*  
   Serial.println("\nFiles found on the card (name, date and size in bytes): ");
   root.openRoot(volume);
   
   // list all files in the card with date and size
   root.ls(LS_R | LS_DATE | LS_SIZE);
+*/
 }
 /*
 ISR (TIMER1_COMPA_vect)
@@ -128,7 +138,7 @@ void loop()
   OCR1AH =0x00;
   OCR1AL =0x5A;
 */
-  DAC.setVoltage((uint16_t)10,false);
+  DAC.setVoltage((uint16_t)1,false);
   //Serial.println("Sound");
   delayMicroseconds(2272);
   DAC.setVoltage((uint16_t)0,false);
